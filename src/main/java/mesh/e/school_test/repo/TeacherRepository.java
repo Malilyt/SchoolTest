@@ -2,7 +2,7 @@ package mesh.e.school_test.repo;
 
 import mesh.e.school_test.models.Teacher;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.web.bind.annotation.RequestParam;
+
 
 import java.util.List;
 
