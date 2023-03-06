@@ -8,12 +8,12 @@ import mesh.e.school_test.repo.SchoolClassRepository;
 
 import mesh.e.school_test.repo.StudentRepository;
 import mesh.e.school_test.repo.TeacherRepository;
+import mesh.e.school_test.specifications.StudentSpecification;
+import mesh.e.school_test.specifications.TeacherSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,8 +26,6 @@ public class MainController {
 
 
     CreateMnemoCode createMnemoCode = new CreateMnemoCode();
-
-
 
     @Autowired
     private TeacherRepository teacherRepository;
@@ -145,27 +143,20 @@ public class MainController {
              Map<String, Object> model){
 
 
-        Optional<SchoolClass> sc = schoolClassRepo.findById(scId);
+
         SchoolClass schoolClass = schoolClassRepo.findById(scId)
                 .orElseThrow(ClassCastException::new);
 
+        Collection<Teacher> mainTeacher = teacherRepository.findBySchoolClass(schoolClass);
 
-
-        Collection<Teacher> teacher = teacherRepository.findBySchoolClass(schoolClass);
-
-
-
-        ArrayList<SchoolClass> result = new ArrayList<>();
-        sc.ifPresent(result::add);
 
         Optional<SchoolClass> searchSC = schoolClassRepo.findById(scId);
         ArrayList<SchoolClass> searchSCList = new ArrayList<>();
 
         searchSC.ifPresent(searchSCList::add);
 
-        model.put("teachers", teacher);
+        model.put("mainTeacher", mainTeacher);
         model.put("searchSC", searchSCList);
-        model.put("sc", result);
         return "change_mt";
     }
 
@@ -184,6 +175,10 @@ public class MainController {
 
 
         Optional<SchoolClass> sc = schoolClassRepo.findById(scId);
+        SchoolClass schoolClass = schoolClassRepo.findById(scId)
+                .orElseThrow(ClassCastException::new);
+
+        Collection<Teacher> mainTeacher = teacherRepository.findBySchoolClass(schoolClass);
 
         ArrayList<SchoolClass> result = new ArrayList<>();
         sc.ifPresent(result::add);
@@ -197,15 +192,25 @@ public class MainController {
 
         if(!birthYearSt.equals("")) {
             int birthYear = Integer.parseInt(birthYearSt);
-            teachers = teacherRepository.
-                    findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndMainSubjectIsContainingAndGenderIdentityIsContainingAndBirthYear
-                            (firstName, lastName ,middleName,  mainSubject, genderIdentity, birthYear);
+
+            Specification<Teacher> sTeacher = Specification.where(TeacherSpecification.firstName(firstName)).
+                    and(TeacherSpecification.lastName(lastName)).
+                    and(TeacherSpecification.middleName(middleName)).
+                    and(TeacherSpecification.mainSubject(mainSubject)).
+                    and(TeacherSpecification.genderIdentity(genderIdentity)).
+                    and(TeacherSpecification.birthYear(birthYear));
+            teachers = teacherRepository.findAll(sTeacher);
             model.put("teachers", teachers);
         }
         if(birthYearSt.equals("")) {
-            teachers = teacherRepository.
-                    findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndMainSubjectIsContainingAndGenderIdentityIsContaining
-                            (firstName, lastName ,middleName,  mainSubject, genderIdentity);
+
+            Specification<Teacher> sTeacher = Specification.where(TeacherSpecification.firstName(firstName)).
+                    and(TeacherSpecification.lastName(lastName)).
+                    and(TeacherSpecification.middleName(middleName)).
+                    and(TeacherSpecification.mainSubject(mainSubject)).
+                    and(TeacherSpecification.genderIdentity(genderIdentity));
+            teachers = teacherRepository.findAll(sTeacher);
+
             model.put("teachers", teachers);
         }
         if(firstName.equals("") && lastName.equals("") && middleName.equals("") && mainSubject.equals("") &&  genderIdentity.equals("") && birthYearSt.equals("")){
@@ -214,7 +219,7 @@ public class MainController {
         }
 
 
-
+        model.put("mainTeacher", mainTeacher);
         model.put("searchSC", searchSCList);
         model.put("sc", result);
         return "change_mt";
@@ -319,19 +324,26 @@ public class MainController {
 
         if(!birthYearSt.equals("")) {
             int birthYear = Integer.parseInt(birthYearSt);
-            students = studentRepository.
-                    findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndGenderIdentityIsContainingAndBirthYear
-                            (firstName, lastName ,middleName, genderIdentity, birthYear);
-            model.put("students", students);
+
+            Specification<Student> sStudents = Specification.where(StudentSpecification.firstName(firstName)).
+                    and(StudentSpecification.lastName(lastName)).
+                    and(StudentSpecification.middleName(middleName)).
+                    and(StudentSpecification.genderIdentity(genderIdentity)).
+                    and(StudentSpecification.birthYear(birthYear));
+            students = studentRepository.findAll(sStudents);
+            model.put("student", students);
         }
         if(birthYearSt.equals("")) {
-            students = studentRepository.
-                    findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndGenderIdentityIsContaining
-                            (firstName, lastName ,middleName, genderIdentity);
-            model.put("students", students);
+
+            Specification<Student> sStudents = Specification.where(StudentSpecification.firstName(firstName)).
+                    and(StudentSpecification.lastName(lastName)).
+                    and(StudentSpecification.middleName(middleName)).
+                    and(StudentSpecification.genderIdentity(genderIdentity));
+            students = studentRepository.findAll(sStudents);
+            model.put("student", students);
         }
-        if(firstName.equals("") && lastName.equals("") && middleName.equals("") && genderIdentity.equals("") && birthYearSt.equals("")){
-            model.put("students", null);
+        if(firstName.equals("") && lastName.equals("") && middleName.equals("") &&  genderIdentity.equals("") && birthYearSt.equals("")){
+            model.put("student", null);
         }
 
         Collection<Teacher> teacher = teacherRepository.findBySchoolClass(schoolClass);
@@ -400,7 +412,6 @@ public class MainController {
 
         List<SchoolClass> res;
 
-
         List<Teacher> teachers = teacherRepository.findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContaining
         (firstNameMainTeacher,  lastNameMainTeacher , middleNameMainTeacher);
 
@@ -410,9 +421,7 @@ public class MainController {
 
             for (Iterator<Teacher> iter = teachers.iterator(); iter.hasNext(); ) {
                 Teacher element = iter.next();
-
                 Collection<SchoolClass> searchCT = element.getSchoolClass();
-
                 model.put("searchC",  searchCT);
             }
         }
@@ -609,18 +618,29 @@ public class MainController {
 
         if(!birthYearSt.equals("")) {
             int birthYear = Integer.parseInt(birthYearSt);
-            teachers = teacherRepository.
-                    findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndMainSubjectIsContainingAndGenderIdentityIsContainingAndBirthYear
-                            (firstName, lastName ,middleName,  mainSubject, genderIdentity, birthYear);
+
+            Specification<Teacher> sTeacher = Specification.where(TeacherSpecification.firstName(firstName)).
+                    and(TeacherSpecification.lastName(lastName)).
+                    and(TeacherSpecification.middleName(middleName)).
+                    and(TeacherSpecification.mainSubject(mainSubject)).
+                    and(TeacherSpecification.genderIdentity(genderIdentity)).
+                    and(TeacherSpecification.birthYear(birthYear));
+            teachers = teacherRepository.findAll(sTeacher);
             model.put("teachers", teachers);
         }
         if(birthYearSt.equals("")) {
-            teachers = teacherRepository.
-                    findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndMainSubjectIsContainingAndGenderIdentityIsContaining
-                            (firstName, lastName ,middleName,  mainSubject, genderIdentity);
+
+            Specification<Teacher> sTeacher = Specification.where(TeacherSpecification.firstName(firstName)).
+                    and(TeacherSpecification.lastName(lastName)).
+                    and(TeacherSpecification.middleName(middleName)).
+                    and(TeacherSpecification.mainSubject(mainSubject)).
+                    and(TeacherSpecification.genderIdentity(genderIdentity));
+            teachers = teacherRepository.findAll(sTeacher);
+
             model.put("teachers", teachers);
         }
         if(firstName.equals("") && lastName.equals("") && middleName.equals("") && mainSubject.equals("") &&  genderIdentity.equals("") && birthYearSt.equals("")){
+
             model.put("teachers", null);
         }
 
@@ -723,15 +743,22 @@ public class MainController {
 
         if(!birthYearSt.equals("")) {
             int birthYear = Integer.parseInt(birthYearSt);
-            student = studentRepository.
-                    findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndGenderIdentityIsContainingAndBirthYear
-                            (firstName, lastName ,middleName, genderIdentity, birthYear);
+
+            Specification<Student> sStudents = Specification.where(StudentSpecification.firstName(firstName)).
+                                        and(StudentSpecification.lastName(lastName)).
+                                        and(StudentSpecification.middleName(middleName)).
+                                        and(StudentSpecification.genderIdentity(genderIdentity)).
+                                        and(StudentSpecification.birthYear(birthYear));
+            student = studentRepository.findAll(sStudents);
             model.put("student", student);
         }
         if(birthYearSt.equals("")) {
-            student = studentRepository.
-                    findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndGenderIdentityIsContaining
-                            (firstName, lastName ,middleName, genderIdentity);
+
+            Specification<Student> sStudents = Specification.where(StudentSpecification.firstName(firstName)).
+                    and(StudentSpecification.lastName(lastName)).
+                    and(StudentSpecification.middleName(middleName)).
+                    and(StudentSpecification.genderIdentity(genderIdentity));
+            student = studentRepository.findAll(sStudents);
             model.put("student", student);
         }
         if(firstName.equals("") && lastName.equals("") && middleName.equals("") &&  genderIdentity.equals("") && birthYearSt.equals("")){

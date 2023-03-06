@@ -2,11 +2,12 @@ package mesh.e.school_test.repo;
 
 import mesh.e.school_test.models.Student;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 
-public interface StudentRepository extends CrudRepository<Student, Long> {
+public interface StudentRepository extends CrudRepository<Student, Long>, JpaSpecificationExecutor {
 
 
     List<Student> findByFirstNameIsContainingAndLastNameIsContainingAndMiddleNameIsContainingAndGenderIdentityIsContainingAndBirthYear(String firstName, String lastName , String middleName,  String genderIdentity, int birthYear);
